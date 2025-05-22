@@ -1,0 +1,62 @@
+service: heimdall-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 1024
+  timeout: 30
+  environment:
+    NODE_ENV: ${opt:stage, 'dev'}
+    PORT: 4000
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+functions:
+  api:
+    handler: src/lambda.lambdaHandler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+    lambdaPort: 4002
+    noPrependStageInUrl: true
+    ignoreJWTSignature: true
+    reloadHandler: true
+    disableCookieValidation: true
+    binaryMediaTypes:
+      - 'image/*'
+      - 'application/octet-stream'
+      - 'application/javascript'
+      - 'text/css'
+      - 'text/html'
+      - 'text/*'
+    cacheInvalidation: true
+    apiGateway:
+      resourceTimeout: 30
+
+package:
+  excludeDevDependencies: true
+  patterns:
+    - 'dist/**'
+    - 'package.json'
+    - 'package-lock.json'
+    - '!.git/**'
+    - '!.vscode/**'
+    - '!tests/**'
+    - '!.env'
+    - '!.gitignore'
+    - '!README.md'
+    - '!serverless.yml'
+    - '!tsconfig.json'
+    - '!tsconfig.tsbuildinfo'
+    - '!src/**' 

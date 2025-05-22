@@ -1,0 +1,40 @@
+{
+  "name": "@luismr/heimdall-middleware-express",
+  "version": "0.0.1",
+  "description": "Authentication and authorization middleware library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [
+    "auth",
+    "middleware",
+    "express",
+    "jwt"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luismr/heimdall.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
