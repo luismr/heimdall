@@ -66,21 +66,21 @@ cp .env.example .env
 Create a `.env` file in the project root:
 
 ```env
-# JWT Configuration
+# Application Configuration
 JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-
-# AWS DynamoDB Configuration
-AWS_REGION=us-east-1
 USERS_TABLE=HeimdallUsers
-
-# Server Configuration
 PORT=4000
 NODE_ENV=development
+
+# AWS Credentials (required for DynamoDB)
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_REGION=us-east-1
 ```
 
 > ⚠️ **Important**: Always use strong secrets in production environments!
+
+> 📚 **AWS Configuration**: For detailed AWS credentials setup and alternative configuration methods, see [AWS Environment Variables Documentation](https://docs.aws.amazon.com/sdkref/latest/guide/environment-variables.html)
 
 ## Quick Start
 
