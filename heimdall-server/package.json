@@ -2,12 +2,13 @@
   "name": "@luismr/heimdall-api",
   "version": "0.0.1",
   "description": "Authentication and Authorization API with JWT, DDD, DynamoDB, bcrypt, Express, and Serverless.",
-  "main": "dist/index.js",
+  "main": "dist/src/server.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "node dist/src/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "test": "jest",
+    "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "serverless:dev": "serverless offline",
     "serverless:deploy": "serverless deploy",
@@ -52,7 +53,8 @@
   },
   "dependencies": {
     "@luismr/heimdall-middleware-express": "^0.0.1",
-    "aws-sdk": "^2.1481.0",
+    "@aws-sdk/client-dynamodb": "^3.705.0",
+    "@aws-sdk/lib-dynamodb": "^3.705.0",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
     "serverless-http": "^3.2.0"

@@ -10,6 +10,9 @@ export class User {
   ) {}
 
   async verifyPassword(password: string): Promise<boolean> {
+    if (!password || password === null || password === undefined) {
+      return false;
+    }
     return bcrypt.compare(password, this.passwordHash);
   }
 }
