@@ -51,6 +51,7 @@
     "typescript-eslint": "^8.32.1"
   },
   "dependencies": {
+    "@luismr/heimdall-middleware-express": "^0.0.1",
     "aws-sdk": "^2.1481.0",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",

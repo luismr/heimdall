@@ -15,7 +15,7 @@
     "jwt"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
