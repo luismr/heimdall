@@ -73,7 +73,7 @@ export class UserDomain implements IUserDomain {
       await this.userRepository.save(user);
       
       return { accessToken, newRefreshToken };
-    } catch (error) {
+    } catch (_error) {
       user.refreshTokens = user.refreshTokens.filter(rt => rt !== refreshToken);
       await this.userRepository.save(user);
       throw new Error('Refresh token expired or invalid, please login again.');
