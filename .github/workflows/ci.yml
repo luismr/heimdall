@@ -1,0 +1,230 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.changes.outputs.server }}
+      middleware: ${{ steps.changes.outputs.middleware }}
+      client: ${{ steps.changes.outputs.client }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'heimdall-server/**'
+            middleware:
+              - 'heimdall-middleware-express/**'
+            client:
+              - 'heimdall-client/**'
+
+  test-server:
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: heimdall-server
+    
+    strategy:
+      matrix:
+        node-version: [20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: heimdall-server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          file: heimdall-server/coverage/lcov.info
+          flags: server
+          name: heimdall-server
+
+  test-middleware:
+    needs: changes
+    if: ${{ needs.changes.outputs.middleware == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: heimdall-middleware-express
+    
+    strategy:
+      matrix:
+        node-version: [20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: heimdall-middleware-express/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          file: heimdall-middleware-express/coverage/lcov.info
+          flags: middleware
+          name: heimdall-middleware-express
+
+  test-client:
+    needs: changes
+    if: ${{ needs.changes.outputs.client == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: heimdall-client
+    
+    strategy:
+      matrix:
+        node-version: [20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: heimdall-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          file: heimdall-client/coverage/lcov.info
+          flags: client
+          name: heimdall-client
+
+  integration-tests:
+    needs: [test-server, test-middleware, test-client]
+    if: always() && (needs.test-server.result == 'success' || needs.test-server.result == 'skipped') && (needs.test-middleware.result == 'success' || needs.test-middleware.result == 'skipped') && (needs.test-client.result == 'success' || needs.test-client.result == 'skipped')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies for all modules
+        run: |
+          cd heimdall-server && npm ci
+          cd ../heimdall-middleware-express && npm ci
+          cd ../heimdall-client && npm ci
+
+      - name: Build all modules
+        run: |
+          cd heimdall-middleware-express && npm run build
+          cd ../heimdall-client && npm run build
+          cd ../heimdall-server && npm run build
+
+      - name: Integration test placeholder
+        run: |
+          echo "All modules built successfully!"
+          echo "Add integration tests here if needed"
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run security audit for server
+        run: |
+          cd heimdall-server
+          npm audit --audit-level=high
+
+      - name: Run security audit for middleware
+        run: |
+          cd heimdall-middleware-express
+          npm audit --audit-level=high
+
+      - name: Run security audit for client
+        run: |
+          cd heimdall-client
+          npm audit --audit-level=high
+
+  build-summary:
+    needs: [test-server, test-middleware, test-client, integration-tests, security-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Server | ${{ needs.test-server.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Middleware | ${{ needs.test-middleware.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Client | ${{ needs.test-client.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY 
