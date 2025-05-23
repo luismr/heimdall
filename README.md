@@ -24,26 +24,26 @@ Heimdall is a powerful Asgardian warrior who serves as the guardian of the Bifr�
 
 ## 🏗️ Architecture Overview
 
-The Heimdall ecosystem consists of two main components that work together to provide complete authentication and authorization:
+The Heimdall ecosystem consists of three main components that work together to provide complete authentication and authorization:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Heimdall Ecosystem                      │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────┐    ┌───────────────────────────┐   │
-│  │  Heimdall Server    │◄──►│ Heimdall Middleware       │   │
-│  │  (API Backend)      │    │ (Express.js Library)      │   │
-│  │                     │    │                           │   │
-│  │ • User Management   │    │ • JWT Validation          │   │
-│  │ • Authentication    │    │ • Role-Based Access       │   │
-│  │ • Token Generation  │    │ • Request Protection      │   │
-│  │ • Admin Operations  │    │ • Easy Integration        │   │
-│  │ • DDD Architecture  │    │ • TypeScript Support      │   │
-│  │ • DynamoDB Storage  │    │                           │   │
-│  └─────────────────────┘    └───────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                              Heimdall Ecosystem                                      │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  ┌─────────────────────┐    ┌───────────────────────────┐    ┌───────────────────┐   │
+│  │  Heimdall Server    │◄──►│ Heimdall Middleware       │◄──►│ Heimdall Client   │   │
+│  │  (API Backend)      │    │ (Express.js Library)      │    │ (TypeScript SDK)  │   │
+│  │                     │    │                           │    │                   │   │
+│  │ • User Management   │    │ • JWT Validation          │    │ • API Client      │   │
+│  │ • Authentication    │    │ • Role-Based Access       │    │ • Token Mgmt      │   │
+│  │ • Token Generation  │    │ • Request Protection      │    │ • Type Safety     │   │
+│  │ • Admin Operations  │    │ • Easy Integration        │    │ • Error Handling  │   │
+│  │ • DDD Architecture  │    │ • TypeScript Support      │    │ • Framework Agno. │   │
+│  │ • DynamoDB Storage  │    │                           │    │ • Axios Based     │   │
+│  └─────────────────────┘    └───────────────────────────┘    └───────────────────┘   │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 📦 Components
@@ -86,6 +86,25 @@ Lightweight Express.js middleware for protecting your API endpoints.
 npm install @luismr/heimdall-middleware-express
 ```
 
+### 🔧 [Heimdall Client](./heimdall-client/)
+[![npm version](https://badge.fury.io/js/%40luismr%2Fheimdall-client.svg)](https://badge.fury.io/js/%40luismr%2Fheimdall-client)
+
+TypeScript client library for consuming Heimdall authentication API endpoints.
+
+**Features:**
+- 🎯 Type-safe API client with full TypeScript support
+- 🔄 Automatic authentication context management
+- ⚡ Built on Axios with request/response interceptors
+- 🛡️ Comprehensive error handling with custom error types
+- 🔐 JWT token management and auto-renewal
+- 🏗️ Framework-agnostic (React, Vue, Node.js, etc.)
+- 🧪 100% test coverage with comprehensive testing
+- 📚 Rich examples and documentation
+
+```bash
+npm install @luismr/heimdall-client
+```
+
 ## 🚀 Quick Start
 
 ### 1. Set Up the Authentication Server
@@ -98,10 +117,40 @@ npm install
 npm run dev
 ```
 
-### 2. Install and Use the Middleware
+### 2. Install and Use the Client
 
 ```bash
-# In your Express.js project
+# In your application project
+npm install @luismr/heimdall-client
+```
+
+```typescript
+import { HeimdallClient } from '@luismr/heimdall-client';
+
+const client = new HeimdallClient({
+  baseURL: 'http://localhost:4000/api'
+});
+
+// Register a user
+const user = await client.signup({
+  username: 'johndoe',
+  password: 'securepassword123'
+});
+
+// Login and get tokens
+const loginResult = await client.login({
+  username: 'johndoe',
+  password: 'securepassword123'
+});
+
+// Client automatically manages authentication context
+console.log(client.isAuthenticated()); // true
+```
+
+### 3. Protect Your API Routes
+
+```bash
+# In your Express.js API project
 npm install @luismr/heimdall-middleware-express
 ```
 
@@ -124,22 +173,46 @@ app.get('/admin/dashboard', requireAdmin, (req: AuthRequest, res) => {
 app.listen(3000);
 ```
 
-### 3. Complete Integration
+### 4. Complete Integration Example
 
-```bash
-# Register a user
-curl -X POST http://localhost:4000/api/signup \
-  -H "Content-Type: application/json" \
-  -d '{"username": "johndoe", "password": "securepassword123"}'
+```typescript
+import { HeimdallClient } from '@luismr/heimdall-client';
 
-# Login and get tokens
-curl -X POST http://localhost:4000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "johndoe", "password": "securepassword123"}'
+const client = new HeimdallClient({
+  baseURL: 'http://localhost:4000/api'
+});
 
-# Use token to access protected routes
-curl -X GET http://localhost:3000/profile \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+// Register, login, and make authenticated requests
+try {
+  // Register a user
+  await client.signup({
+    username: 'johndoe',
+    password: 'securepassword123'
+  });
+
+  // Login (automatically sets auth context)
+  const loginResult = await client.login({
+    username: 'johndoe',
+    password: 'securepassword123'
+  });
+
+  // Now make requests to your protected API
+  const response = await fetch('http://localhost:3000/profile', {
+    headers: {
+      'Authorization': `Bearer ${loginResult.accessToken}`
+    }
+  });
+
+  const profile = await response.json();
+  console.log(profile);
+
+  // Logout when done
+  await client.logout({
+    refreshToken: loginResult.refreshToken
+  });
+} catch (error) {
+  console.error('Authentication error:', error);
+}
 ```
 
 ## 🌟 Use Cases
@@ -148,16 +221,19 @@ curl -X GET http://localhost:3000/profile \
 - **Multi-service Authentication**: Central auth server with distributed middleware
 - **Microservices Security**: Each service protected with Heimdall middleware
 - **Admin Dashboards**: Role-based access for administrative functions
+- **Client Applications**: Type-safe authentication with Heimdall client
 
 ### SaaS Platforms
 - **User Management**: Complete user lifecycle with roles and permissions
 - **API Protection**: Secure your REST APIs with minimal configuration
 - **Scalable Architecture**: DynamoDB backend scales with your needs
+- **Frontend Integration**: Seamless authentication for web and mobile apps
 
 ### Startup MVPs
 - **Rapid Development**: Get authentication working in minutes
 - **Security Best Practices**: Production-ready security out of the box
 - **Cost Effective**: Serverless deployment reduces infrastructure costs
+- **Developer Experience**: Type-safe client with excellent DX
 
 ## 🔧 Configuration
 
@@ -191,13 +267,14 @@ HEIMDALL_API_URL=http://localhost:4000/api
 |-----------|-------------|---------------|
 | **🖥️ Server** | Authentication API Backend | [Server README](./heimdall-server/README.md) |
 | **🛡️ Middleware** | Express.js Protection Library | [Middleware README](./heimdall-middleware-express/README.md) |
+| **🔧 Client** | TypeScript API Client Library | [Client README](./heimdall-client/README.md) |
 | **🚀 Quick Start** | Step-by-step Integration Guide | [Quick Start Guide](./heimdall-middleware-express/QUICKSTART.md) |
 | **🔧 Development** | Build and Development Setup | [Build Guide](./heimdall-middleware-express/BUILD.md) |
 | **🤝 Contributing** | Contribution Guidelines | [Contributing Guide](./heimdall-middleware-express/CONTRIBUTE.md) |
 
 ## 🧪 Testing
 
-Both components include comprehensive test suites:
+All components include comprehensive test suites:
 
 ```bash
 # Test the server
@@ -207,11 +284,16 @@ npm run test:coverage
 # Test the middleware
 cd heimdall-middleware-express
 npm run test:coverage
+
+# Test the client
+cd heimdall-client
+npm run test:coverage
 ```
 
 **Combined Coverage:**
 - **Server**: 90%+ coverage across all DDD layers
 - **Middleware**: 100% coverage for authentication logic
+- **Client**: 100% coverage for API client functionality
 - **Integration**: Full end-to-end authentication flow testing
 
 ## 🚀 Deployment
@@ -227,6 +309,13 @@ npm run serverless:deploy -- --stage prod
 **Middleware Distribution (NPM):**
 ```bash
 cd heimdall-middleware-express
+npm publish
+```
+
+**Client Distribution (NPM):**
+```bash
+cd heimdall-client
+npm run build
 npm publish
 ```
 
@@ -252,6 +341,7 @@ CMD ["npm", "start"]
 - **🛡️ CORS Protection**: Cross-origin request security
 - **🚫 Brute Force Protection**: Rate limiting and security monitoring
 - **📝 Audit Logging**: Track authentication and authorization events
+- **🔒 Type Safety**: Client-side type safety prevents common security issues
 
 ## 🤝 Contributing
 
@@ -289,6 +379,7 @@ Just as Heimdall's watchful eyes protect all Nine Realms, let our Heimdall ecosy
 **Ready to guard your API realms? Choose your path:**
 
 🖥️ **[Start with the Server](./heimdall-server/)** - Set up the authentication backend
+🔧 **[Consume with Client](./heimdall-client/)** - Connect your applications securely
 🛡️ **[Protect with Middleware](./heimdall-middleware-express/)** - Secure your Express.js routes
 🚀 **[Quick Integration](./heimdall-middleware-express/QUICKSTART.md)** - Get started in minutes
 
