@@ -87,6 +87,10 @@ USERS_TABLE=HeimdallUsers
 PORT=4000
 NODE_ENV=development
 
+# Signup Protection (required for creating new users)
+SIGNUP_ACCESS_TOKEN=your-signup-access-token
+SIGNUP_SECRET_TOKEN=your-signup-secret-token
+
 # Database Selection
 DB_TYPE=dynamodb  # Options: 'dynamodb' or 'postgres'
 
@@ -214,9 +218,15 @@ npm run test:coverage
 ### Authentication Endpoints
 
 #### POST `/signup`
-Register a new user account.
+Register a new user account. This endpoint requires special authentication tokens to prevent unauthorized user creation.
 
-**Request:**
+**Headers Required:**
+```http
+X-Access-Token: your-signup-access-token
+X-Secret-Token: your-signup-secret-token
+```
+
+**Request Body:**
 ```json
 {
   "username": "johndoe",
@@ -232,6 +242,11 @@ Register a new user account.
   "blocked": false
 }
 ```
+
+**Error Responses:**
+- `401 Unauthorized`: Missing or invalid signup tokens
+- `400 Bad Request`: Invalid request body or user already exists
+- `500 Internal Server Error`: Server configuration error (tokens not configured)
 
 #### POST `/login`
 Authenticate user and get JWT tokens.

@@ -35,8 +35,16 @@ describe('AuthController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
+    // Set test environment variables
+    process.env.SIGNUP_ACCESS_TOKEN = 'test-access-token';
+    process.env.SIGNUP_SECRET_TOKEN = 'test-secret-token';
+    
     mockRequest = {
       body: {},
+      headers: {
+        'x-access-token': 'test-access-token',
+        'x-secret-token': 'test-secret-token'
+      }
     };
     
     mockResponse = {
