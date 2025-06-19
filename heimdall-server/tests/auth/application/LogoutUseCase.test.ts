@@ -1,17 +1,21 @@
 import { LogoutUseCase } from '../../../src/auth/application/LogoutUseCase';
+import { User } from '../../../src/auth/domain/User';
+import { UserRepository } from '../../../src/auth/infrastructure/UserRepository';
+import { UserRepositoryFactory } from '../../../src/auth/infrastructure/UserRepositoryFactory';
 
-// Mock dependencies
-jest.mock('../../../src/auth/infrastructure/UserRepository');
+jest.mock('../../../src/auth/infrastructure/UserRepositoryFactory');
 
-const mockLogout = jest.fn();
+const mockRepository: jest.Mocked<UserRepository> = {
+  findByUsername: jest.fn(),
+  findByRefreshToken: jest.fn(),
+  save: jest.fn(),
+  remove: jest.fn(),
+  saveRefreshToken: jest.fn(),
+  removeRefreshToken: jest.fn(),
+  updateBlocked: jest.fn(),
+};
 
-jest.mock('../../../src/auth/domain/UserDomain', () => {
-  return {
-    UserDomain: jest.fn().mockImplementation(() => ({
-      logout: mockLogout,
-    })),
-  };
-});
+(UserRepositoryFactory.create as jest.Mock).mockReturnValue(mockRepository);
 
 describe('LogoutUseCase', () => {
   let logoutUseCase: LogoutUseCase;
@@ -22,42 +26,29 @@ describe('LogoutUseCase', () => {
   });
 
   describe('execute', () => {
-    it('should call userDomain.logout with correct refresh token', async () => {
+    it('should logout a user by removing the refresh token', async () => {
       const refreshToken = 'valid-refresh-token';
-
-      mockLogout.mockResolvedValue(undefined);
+      const user = new User('testuser', 'hashedPassword', ['ROLE_USER'], false, [refreshToken]);
+      
+      mockRepository.findByRefreshToken.mockResolvedValue(user);
+      (mockRepository.save as jest.Mock).mockResolvedValue(undefined);
 
       await logoutUseCase.execute(refreshToken);
 
-      expect(mockLogout).toHaveBeenCalledWith(refreshToken);
+      expect(mockRepository.findByRefreshToken).toHaveBeenCalledWith(refreshToken);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        username: user.username,
+        refreshTokens: []
+      }));
     });
 
-    it('should propagate errors from userDomain.logout', async () => {
+    it('should not throw an error if the refresh token does not exist', async () => {
       const refreshToken = 'invalid-refresh-token';
-      const error = new Error('Invalid refresh token');
-
-      mockLogout.mockRejectedValue(error);
-
-      await expect(logoutUseCase.execute(refreshToken)).rejects.toThrow('Invalid refresh token');
-      expect(mockLogout).toHaveBeenCalledWith(refreshToken);
-    });
-
-    it('should handle empty refresh token', async () => {
-      const refreshToken = '';
-      const error = new Error('Refresh token is required');
-
-      mockLogout.mockRejectedValue(error);
-
-      await expect(logoutUseCase.execute(refreshToken)).rejects.toThrow('Refresh token is required');
-    });
-
-    it('should handle null refresh token', async () => {
-      const refreshToken = null as any;
-      const error = new Error('Refresh token is required');
-
-      mockLogout.mockRejectedValue(error);
-
-      await expect(logoutUseCase.execute(refreshToken)).rejects.toThrow('Refresh token is required');
+      mockRepository.findByRefreshToken.mockResolvedValue(null);
+      
+      await expect(logoutUseCase.execute(refreshToken)).resolves.not.toThrow();
+      expect(mockRepository.findByRefreshToken).toHaveBeenCalledWith(refreshToken);
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
   });
 }); 

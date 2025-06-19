@@ -337,3 +337,6 @@ application-local.properties
 application-local.yml
 application-dev.properties
 application-dev.yml 
+
+# Postgres Data volume
+data/

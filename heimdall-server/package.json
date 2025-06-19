@@ -4,17 +4,22 @@
   "description": "Authentication and Authorization API with JWT, DDD, DynamoDB, bcrypt, Express, and Serverless.",
   "main": "dist/src/server.js",
   "scripts": {
-    "start": "node dist/src/server.js",
+    "start": "ts-node src/server.ts",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint . --ext .ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "serverless:dev": "serverless offline",
     "serverless:deploy": "serverless deploy",
-    "serverless:package": "serverless package"
+    "serverless:package": "serverless package",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "typeorm:migration:create": "typeorm-ts-node-commonjs migration:create ./src/commons/infrastructure/db/migrations/",
+    "typeorm:migration:generate": "typeorm-ts-node-commonjs migration:generate -d ./src/commons/infrastructure/Datasource.ts ./src/commons/infrastructure/db/migrations/",
+    "typeorm:migration:run": "typeorm-ts-node-commonjs migration:run -d ./src/commons/infrastructure/Datasource.ts",
+    "typeorm:migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./src/commons/infrastructure/Datasource.ts"
   },
   "keywords": [
     "typescript",
@@ -24,7 +29,8 @@
     "jwt",
     "auth",
     "ddd",
-    "dynamodb"
+    "dynamodb",
+    "heimdall"
   ],
   "author": "",
   "license": "MIT",
@@ -39,6 +45,7 @@
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.17.50",
+    "aws-sdk-client-mock": "^4.1.0",
     "cors": "^2.8.5",
     "eslint": "^9.27.0",
     "express": "^4.18.2",
@@ -54,11 +61,14 @@
     "typescript-eslint": "^8.32.1"
   },
   "dependencies": {
-    "@luismr/heimdall-middleware-express": "^0.0.1",
     "@aws-sdk/client-dynamodb": "^3.705.0",
     "@aws-sdk/lib-dynamodb": "^3.705.0",
+    "@luismr/heimdall-middleware-express": "^0.0.1",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
-    "serverless-http": "^3.2.0"
+    "pg": "^8.16.1",
+    "reflect-metadata": "^0.2.2",
+    "serverless-http": "^3.2.0",
+    "typeorm": "^0.3.24"
   }
 }

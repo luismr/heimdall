@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug heimdall-server",
+      "runtimeExecutable": "npm",
+      "args": [
+        "run",
+        "dev"
+      ],
+      "env": {
+        "DB_TYPE": "postgres",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "postgres",
+        "POSTGRES_DB": "heimdall",
+        "SIGNUP_ACCESS_TOKEN": "your-signup-access-token",
+        "SIGNUP_SECRET_TOKEN": "your-signup-secret-token"
+      },
+      "cwd": "${workspaceFolder}/heimdall-server",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+} 

@@ -1,19 +1,21 @@
 import { LoginUseCase } from '../../../src/auth/application/LoginUseCase';
-import { UserDomain } from '../../../src/auth/domain/UserDomain';
 import { User } from '../../../src/auth/domain/User';
+import { UserRepository } from '../../../src/auth/infrastructure/UserRepository';
+import { UserRepositoryFactory } from '../../../src/auth/infrastructure/UserRepositoryFactory';
 
-// Mock dependencies
-jest.mock('../../../src/auth/infrastructure/UserRepository');
+jest.mock('../../../src/auth/infrastructure/UserRepositoryFactory');
 
-const mockLogin = jest.fn();
+const mockRepository: jest.Mocked<UserRepository> = {
+  findByUsername: jest.fn(),
+  findByRefreshToken: jest.fn(),
+  save: jest.fn(),
+  remove: jest.fn(),
+  saveRefreshToken: jest.fn(),
+  removeRefreshToken: jest.fn(),
+  updateBlocked: jest.fn(),
+};
 
-jest.mock('../../../src/auth/domain/UserDomain', () => {
-  return {
-    UserDomain: jest.fn().mockImplementation(() => ({
-      login: mockLogin,
-    })),
-  };
-});
+(UserRepositoryFactory.create as jest.Mock).mockReturnValue(mockRepository);
 
 describe('LoginUseCase', () => {
   let loginUseCase: LoginUseCase;
@@ -24,52 +26,47 @@ describe('LoginUseCase', () => {
   });
 
   describe('execute', () => {
-    it('should call userDomain.login with correct parameters', async () => {
+    it('should login successfully and return tokens', async () => {
       const username = 'testuser';
       const password = 'password123';
-      const expectedResult = {
-        user: new User(username, 'hashedPassword', ['ROLE_USER']),
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token'
-      };
+      const user = new User(username, 'hashedPassword', ['ROLE_USER'], false, []);
+      jest.spyOn(user, 'verifyPassword').mockResolvedValue(true);
 
-      mockLogin.mockResolvedValue(expectedResult);
+      mockRepository.findByUsername.mockResolvedValue(user);
+      (mockRepository.save as jest.Mock).mockResolvedValue(undefined);
 
       const result = await loginUseCase.execute(username, password);
 
-      expect(mockLogin).toHaveBeenCalledWith(username, password);
-      expect(result).toBe(expectedResult);
+      expect(result.user).toEqual(user);
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+      expect(mockRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(user.verifyPassword).toHaveBeenCalledWith(password);
+      expect(mockRepository.save).toHaveBeenCalledWith(user);
     });
 
-    it('should propagate errors from userDomain.login', async () => {
+    it('should throw an error for invalid credentials if user does not exist', async () => {
+      const username = 'testuser';
+      const password = 'password123';
+      mockRepository.findByUsername.mockResolvedValue(null);
+      await expect(loginUseCase.execute(username, password)).rejects.toThrow('Invalid credentials or user blocked');
+    });
+
+    it('should throw an error if the user is blocked', async () => {
+      const username = 'testuser';
+      const password = 'password123';
+      const user = new User(username, 'hashedPassword', ['ROLE_USER'], true, []);
+      mockRepository.findByUsername.mockResolvedValue(user);
+      await expect(loginUseCase.execute(username, password)).rejects.toThrow('Invalid credentials or user blocked');
+    });
+
+    it('should throw an error for invalid credentials if password is wrong', async () => {
       const username = 'testuser';
       const password = 'wrongpassword';
-      const error = new Error('Invalid credentials');
-
-      mockLogin.mockRejectedValue(error);
-
+      const user = new User(username, 'hashedPassword', ['ROLE_USER'], false, []);
+      jest.spyOn(user, 'verifyPassword').mockResolvedValue(false);
+      mockRepository.findByUsername.mockResolvedValue(user);
       await expect(loginUseCase.execute(username, password)).rejects.toThrow('Invalid credentials');
-      expect(mockLogin).toHaveBeenCalledWith(username, password);
-    });
-
-    it('should handle empty username', async () => {
-      const username = '';
-      const password = 'password123';
-      const error = new Error('Username is required');
-
-      mockLogin.mockRejectedValue(error);
-
-      await expect(loginUseCase.execute(username, password)).rejects.toThrow('Username is required');
-    });
-
-    it('should handle empty password', async () => {
-      const username = 'testuser';
-      const password = '';
-      const error = new Error('Password is required');
-
-      mockLogin.mockRejectedValue(error);
-
-      await expect(loginUseCase.execute(username, password)).rejects.toThrow('Password is required');
     });
   });
 }); 

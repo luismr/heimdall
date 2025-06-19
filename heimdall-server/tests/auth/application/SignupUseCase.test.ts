@@ -1,18 +1,21 @@
 import { SignupUseCase } from '../../../src/auth/application/SignupUseCase';
 import { User } from '../../../src/auth/domain/User';
+import { UserRepository } from '../../../src/auth/infrastructure/UserRepository';
+import { UserRepositoryFactory } from '../../../src/auth/infrastructure/UserRepositoryFactory';
 
-// Mock dependencies
-jest.mock('../../../src/auth/infrastructure/UserRepository');
+jest.mock('../../../src/auth/infrastructure/UserRepositoryFactory');
 
-const mockSignup = jest.fn();
+const mockRepository: jest.Mocked<UserRepository> = {
+  findByUsername: jest.fn(),
+  findByRefreshToken: jest.fn(),
+  save: jest.fn(),
+  remove: jest.fn(),
+  saveRefreshToken: jest.fn(),
+  removeRefreshToken: jest.fn(),
+  updateBlocked: jest.fn(),
+};
 
-jest.mock('../../../src/auth/domain/UserDomain', () => {
-  return {
-    UserDomain: jest.fn().mockImplementation(() => ({
-      signup: mockSignup,
-    })),
-  };
-});
+(UserRepositoryFactory.create as jest.Mock).mockReturnValue(mockRepository);
 
 describe('SignupUseCase', () => {
   let signupUseCase: SignupUseCase;
@@ -23,48 +26,41 @@ describe('SignupUseCase', () => {
   });
 
   describe('execute', () => {
-    it('should call userDomain.signup with correct parameters', async () => {
+    it('should create and save a new user', async () => {
       const username = 'newuser';
       const password = 'password123';
-      const expectedUser = new User(username, 'hashedPassword', ['ROLE_USER']);
-
-      mockSignup.mockResolvedValue(expectedUser);
+      
+      mockRepository.findByUsername.mockResolvedValue(null);
+      (mockRepository.save as jest.Mock).mockResolvedValue(undefined);
 
       const result = await signupUseCase.execute(username, password);
 
-      expect(mockSignup).toHaveBeenCalledWith(username, password);
-      expect(result).toBe(expectedUser);
+      expect(result).toBeInstanceOf(User);
+      expect(result.username).toBe(username);
+      expect(mockRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.any(User));
     });
 
-    it('should propagate errors from userDomain.signup', async () => {
+    it('should throw an error if the user already exists', async () => {
       const username = 'existinguser';
       const password = 'password123';
-      const error = new Error('User already exists');
+      const existingUser = new User(username, 'hashedPassword', [], false, []);
 
-      mockSignup.mockRejectedValue(error);
-
+      mockRepository.findByUsername.mockResolvedValue(existingUser);
+      
       await expect(signupUseCase.execute(username, password)).rejects.toThrow('User already exists');
-      expect(mockSignup).toHaveBeenCalledWith(username, password);
+      expect(mockRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
-    it('should handle invalid username', async () => {
-      const username = '';
-      const password = 'password123';
-      const error = new Error('Username is required');
-
-      mockSignup.mockRejectedValue(error);
-
-      await expect(signupUseCase.execute(username, password)).rejects.toThrow('Username is required');
+    it('should throw an error for an empty username', async () => {
+      await expect(signupUseCase.execute('', 'password123')).rejects.toThrow('Username is required');
+      expect(mockRepository.findByUsername).not.toHaveBeenCalled();
     });
 
-    it('should handle weak password', async () => {
-      const username = 'newuser';
-      const password = '123';
-      const error = new Error('Password too weak');
-
-      mockSignup.mockRejectedValue(error);
-
-      await expect(signupUseCase.execute(username, password)).rejects.toThrow('Password too weak');
+    it('should throw an error for a weak password', async () => {
+      await expect(signupUseCase.execute('testuser', '123')).rejects.toThrow('Password is too weak');
+      expect(mockRepository.findByUsername).not.toHaveBeenCalled();
     });
   });
 }); 
