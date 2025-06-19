@@ -1,13 +1,13 @@
-import { Repository, getRepository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../domain/User';
 import { UserRepository } from './UserRepository';
-import { AppDataSource } from '../../config/data-source';
+import { PostgresDataSource } from '../../commons/infrastructure/Datasource';
 
 export class PostgresUserRepository implements UserRepository {
   private repository: Repository<User>;
 
-  constructor(repository: Repository<User> = getRepository(User)) {
-    this.repository = repository;
+  constructor() {
+    this.repository = PostgresDataSource.getRepository(User);
   }
 
   async findByUsername(username: string): Promise<User | null> {

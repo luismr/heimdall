@@ -1,8 +1,8 @@
 import 'reflect-metadata';
-import { PostgresUserRepository } from "../../../src/auth/infrastructure/PostgresUserRepository";
-import { User } from "../../../src/auth/domain/User";
 import { Repository } from "typeorm";
+import { User } from "../../../src/auth/domain/User";
 
+// Mock setup
 const mockQueryBuilder = {
   where: jest.fn().mockReturnThis(),
   getOne: jest.fn(),
@@ -16,12 +16,22 @@ const mockRepository: jest.Mocked<Repository<User>> = {
   createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
 } as any;
 
+// Mock PostgresDataSource
+jest.mock('../../../src/commons/infrastructure/Datasource', () => ({
+  PostgresDataSource: {
+    getRepository: jest.fn().mockReturnValue(mockRepository)
+  }
+}));
+
+// Import after mocks are set up
+import { PostgresUserRepository } from "../../../src/auth/infrastructure/PostgresUserRepository";
+
 describe('PostgresUserRepository', () => {
     let userRepository: PostgresUserRepository;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        userRepository = new PostgresUserRepository(mockRepository);
+        userRepository = new PostgresUserRepository();
     });
 
     describe('findByUsername', () => {

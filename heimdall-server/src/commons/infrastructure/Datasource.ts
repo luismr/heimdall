@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { User } from '../auth/domain/User';
+import { User } from '../../auth/domain/User';
 
-export const AppDataSource = new DataSource({
+export const PostgresDataSource = new DataSource({
   type: 'postgres',
   host: process.env.POSTGRES_HOST || 'localhost',
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
@@ -12,6 +12,6 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',
   entities: [User],
-  migrations: [],
+  migrations: ['src/commons/infrastructure/db/migrations/*.ts'],
   subscribers: [],
 }); 
