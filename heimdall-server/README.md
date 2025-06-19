@@ -184,6 +184,25 @@ The system will automatically detect which database to use based on your environ
 
 ## Docker
 
+### Using Pre-built Images
+
+Pre-built Docker images are available on Docker Hub at [luismachadoreis/heimdall-server](https://hub.docker.com/r/luismachadoreis/heimdall-server). You can pull and run these images directly:
+
+```bash
+# Pull the latest version
+docker pull luismachadoreis/heimdall-server:latest
+
+# Pull a specific version
+docker pull luismachadoreis/heimdall-server:v0.1.0
+
+# Run using the pre-built image
+docker run -d \
+  -p 4000:4000 \
+  --name heimdall \
+  --env-file .env \
+  luismachadoreis/heimdall-server:latest
+```
+
 ### Building the Docker Image
 
 The project uses GitHub Packages which requires authentication to access the required `@luismr/heimdall-middleware-express` package. You'll need a GitHub personal access token with `read:packages` scope.
