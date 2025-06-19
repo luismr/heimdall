@@ -1,22 +1,22 @@
 name: Docker Publish
 
 on:
-  # workflow_run:
-  #   workflows: ["CI"]
-  #   types:
-  #     - completed
-  #   branches:
-  #     - main
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
   push:
     tags:
       - 'v*'
 
 jobs:
-  docker:
+  docker_build_and_push:
     runs-on: ubuntu-latest
-    # if: |
-    #   github.event.workflow_run.conclusion == 'success' &&
-    #   startsWith(github.ref, 'refs/tags/v')
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout
