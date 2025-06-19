@@ -1,20 +1,22 @@
 import { UnblockUserUseCase } from '../../../src/auth/application/UnblockUserUseCase';
 import { RemoveUserUseCase } from '../../../src/auth/application/RemoveUserUseCase';
+import { User } from '../../../src/auth/domain/User';
+import { UserRepository } from '../../../src/auth/infrastructure/UserRepository';
+import { UserRepositoryFactory } from '../../../src/auth/infrastructure/UserRepositoryFactory';
 
-// Mock dependencies
-jest.mock('../../../src/auth/infrastructure/UserRepository');
+jest.mock('../../../src/auth/infrastructure/UserRepositoryFactory');
 
-const mockUnblockUser = jest.fn();
-const mockRemoveUser = jest.fn();
+const mockRepository: jest.Mocked<UserRepository> = {
+  findByUsername: jest.fn(),
+  findByRefreshToken: jest.fn(),
+  save: jest.fn(),
+  remove: jest.fn(),
+  saveRefreshToken: jest.fn(),
+  removeRefreshToken: jest.fn(),
+  updateBlocked: jest.fn(),
+};
 
-jest.mock('../../../src/auth/domain/UserDomain', () => {
-  return {
-    UserDomain: jest.fn().mockImplementation(() => ({
-      unblockUser: mockUnblockUser,
-      removeUser: mockRemoveUser,
-    })),
-  };
-});
+(UserRepositoryFactory.create as jest.Mock).mockReturnValue(mockRepository);
 
 describe('Admin Use Cases', () => {
   beforeEach(() => {
@@ -28,35 +30,32 @@ describe('Admin Use Cases', () => {
       unblockUserUseCase = new UnblockUserUseCase();
     });
 
-    describe('execute', () => {
-      it('should call userDomain.unblockUser with correct username', async () => {
-        const username = 'blockeduser';
+    it('should unblock a user successfully', async () => {
+      const username = 'blockeduser';
+      const user = new User(username, 'hashedPassword', ['ROLE_USER'], true, []);
+      mockRepository.findByUsername.mockResolvedValue(user);
+      (mockRepository.save as jest.Mock).mockResolvedValue(undefined);
 
-        mockUnblockUser.mockResolvedValue(undefined);
+      await unblockUserUseCase.execute(username);
 
-        await unblockUserUseCase.execute(username);
+      expect(mockRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        username,
+        blocked: false,
+      }));
+    });
 
-        expect(mockUnblockUser).toHaveBeenCalledWith(username);
-      });
+    it('should throw an error if user is not found', async () => {
+      const username = 'nonexistent';
+      mockRepository.findByUsername.mockResolvedValue(null);
+      await expect(unblockUserUseCase.execute(username)).rejects.toThrow('User not found');
+    });
 
-      it('should propagate errors from userDomain.unblockUser', async () => {
-        const username = 'nonexistent';
-        const error = new Error('User not found');
-
-        mockUnblockUser.mockRejectedValue(error);
-
-        await expect(unblockUserUseCase.execute(username)).rejects.toThrow('User not found');
-        expect(mockUnblockUser).toHaveBeenCalledWith(username);
-      });
-
-      it('should handle already unblocked user', async () => {
-        const username = 'activeuser';
-        const error = new Error('User already unblocked');
-
-        mockUnblockUser.mockRejectedValue(error);
-
-        await expect(unblockUserUseCase.execute(username)).rejects.toThrow('User already unblocked');
-      });
+    it('should throw an error if user is already unblocked', async () => {
+      const username = 'unblockeduser';
+      const user = new User(username, 'hashedPassword', ['ROLE_USER'], false, []);
+      mockRepository.findByUsername.mockResolvedValue(user);
+      await expect(unblockUserUseCase.execute(username)).rejects.toThrow('User already unblocked');
     });
   });
 
@@ -67,35 +66,11 @@ describe('Admin Use Cases', () => {
       removeUserUseCase = new RemoveUserUseCase();
     });
 
-    describe('execute', () => {
-      it('should call userDomain.removeUser with correct username', async () => {
-        const username = 'usertoremove';
-
-        mockRemoveUser.mockResolvedValue(undefined);
-
-        await removeUserUseCase.execute(username);
-
-        expect(mockRemoveUser).toHaveBeenCalledWith(username);
-      });
-
-      it('should propagate errors from userDomain.removeUser', async () => {
-        const username = 'nonexistent';
-        const error = new Error('User not found');
-
-        mockRemoveUser.mockRejectedValue(error);
-
-        await expect(removeUserUseCase.execute(username)).rejects.toThrow('User not found');
-        expect(mockRemoveUser).toHaveBeenCalledWith(username);
-      });
-
-      it('should handle empty username', async () => {
-        const username = '';
-        const error = new Error('Username is required');
-
-        mockRemoveUser.mockRejectedValue(error);
-
-        await expect(removeUserUseCase.execute(username)).rejects.toThrow('Username is required');
-      });
+    it('should remove a user successfully', async () => {
+      const username = 'usertoremove';
+      (mockRepository.remove as jest.Mock).mockResolvedValue(undefined);
+      await removeUserUseCase.execute(username);
+      expect(mockRepository.remove).toHaveBeenCalledWith(username);
     });
   });
 }); 
