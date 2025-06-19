@@ -1,6 +1,5 @@
 import { BlockUserUseCase } from '../../../src/auth/application/BlockUserUseCase';
 import { User } from '../../../src/auth/domain/User';
-import { DefaultUserDomain } from '../../../src/auth/domain/DefaultUserDomain';
 import { UserRepository } from '../../../src/auth/infrastructure/UserRepository';
 import { UserRepositoryFactory } from '../../../src/auth/infrastructure/UserRepositoryFactory';
 
@@ -20,11 +19,9 @@ const mockRepository: jest.Mocked<UserRepository> = {
 
 describe('BlockUserUseCase', () => {
   let blockUserUseCase: BlockUserUseCase;
-  let userDomain: DefaultUserDomain;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    userDomain = new DefaultUserDomain(mockRepository);
     blockUserUseCase = new BlockUserUseCase();
   });
 

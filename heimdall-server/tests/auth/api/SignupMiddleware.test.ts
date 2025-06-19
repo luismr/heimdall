@@ -4,7 +4,7 @@ import { validateSignupTokens } from '../../../src/auth/api/SignupMiddleware';
 describe('SignupMiddleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let nextFunction: NextFunction = jest.fn();
+  const nextFunction: NextFunction = jest.fn();
 
   beforeEach(() => {
     process.env.SIGNUP_ACCESS_TOKEN = 'test-access-token';

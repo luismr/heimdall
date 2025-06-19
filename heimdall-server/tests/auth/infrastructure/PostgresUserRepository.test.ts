@@ -8,13 +8,13 @@ const mockQueryBuilder = {
   getOne: jest.fn(),
 };
 
-const mockRepository: jest.Mocked<Repository<User>> = {
+const mockRepository = {
   findOne: jest.fn(),
   save: jest.fn(),
   delete: jest.fn(),
   find: jest.fn(),
   createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
-} as any;
+} as unknown as jest.Mocked<Repository<User>>;
 
 // Mock PostgresDataSource
 jest.mock('../../../src/commons/infrastructure/Datasource', () => ({
