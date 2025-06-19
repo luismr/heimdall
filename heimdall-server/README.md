@@ -8,6 +8,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17.x-blue?logo=postgresql)](https://www.postgresql.org/)
 [![Jest](https://img.shields.io/badge/Jest-29.x-red?logo=jest)](https://jestjs.io/)
 [![Serverless](https://img.shields.io/badge/Serverless-3.x-fd5750?logo=serverless)](https://www.serverless.com/)
+[![Docker](https://img.shields.io/badge/Docker-28.1.x-2496ED?logo=docker)](https://www.docker.com/)
 
 A comprehensive authentication and authorization API server built with Domain-Driven Design (DDD) principles, featuring JWT-based authentication, role-based access control, and flexible database support (AWS DynamoDB or PostgreSQL). Designed for serverless deployment with comprehensive test coverage.
 
@@ -75,6 +76,11 @@ npm install
 # Setup environment variables
 cp .env.example .env
 ```
+
+> ⚠️ **Important Package Dependency**: This project requires the `@luismr/heimdall-middleware-express` package from GitHub Packages. Make sure you:
+> 1. Have a GitHub personal access token with `read:packages` scope
+> 2. Configure npm to use GitHub Packages (via `.npmrc`)
+> 3. Set the `GITHUB_TOKEN` environment variable or provide it during Docker build
 
 ## Environment Variables
 
@@ -175,6 +181,102 @@ The migrations will:
 The system will automatically detect which database to use based on your environment configuration:
 - If `POSTGRES_HOST` is set, PostgreSQL will be used
 - Otherwise, DynamoDB will be used
+
+## Docker
+
+### Building the Docker Image
+
+The project uses GitHub Packages which requires authentication to access the required `@luismr/heimdall-middleware-express` package. You'll need a GitHub personal access token with `read:packages` scope.
+
+```bash
+# Build the Docker image with GitHub token
+docker build -t heimdall-server . --build-arg GITHUB_TOKEN=your_github_token
+
+# Build with a specific tag
+docker build -t heimdall-server:1.0.0 . --build-arg GITHUB_TOKEN=your_github_token
+
+# If you have the token in an environment variable
+docker build -t heimdall-server . --build-arg GITHUB_TOKEN=${GITHUB_TOKEN}
+```
+
+> ⚠️ **Security Note**: The GitHub token is only used during build time and is not included in the final image. The `.npmrc` file is removed after dependency installation.
+
+#### CI/CD Configuration
+
+For automated Docker builds in GitHub Actions, you need to configure the following secrets:
+- `GH_PACKAGES_TOKEN`: A GitHub personal access token with `read:packages` scope for accessing the middleware package
+- `DOCKERHUB_USERNAME`: Your Docker Hub username
+- `DOCKERHUB_TOKEN`: Your Docker Hub access token
+
+### Running with Docker
+
+```bash
+# Run the container
+docker run -d \
+  -p 4000:4000 \
+  --name heimdall \
+  --env-file .env \
+  heimdall-server
+
+# View container logs
+docker logs -f heimdall
+
+# Stop the container
+docker stop heimdall
+
+# Remove the container
+docker rm heimdall
+```
+
+### Environment Variables with Docker
+
+When running with Docker, make sure to:
+1. Create your `.env` file as described in the Environment Variables section
+2. Pass the environment file to Docker using the `--env-file` flag
+3. If using PostgreSQL, ensure the `POSTGRES_HOST` is accessible from within the container
+4. If using DynamoDB, ensure AWS credentials are properly configured in the environment file
+
+### Docker Compose (Optional)
+
+For development with PostgreSQL, you can use this `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    env_file: .env
+    depends_on:
+      - postgres
+    
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: heimdall
+      POSTGRES_PASSWORD: your-secure-password
+      POSTGRES_DB: heimdall
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+Run with Docker Compose:
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
 
 ## Quick Start
 

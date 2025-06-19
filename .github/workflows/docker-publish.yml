@@ -54,6 +54,8 @@ jobs:
         with:
           context: ./heimdall-server
           push: true
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.GH_PACKAGES_TOKEN }}
           tags: |
             luismachadoreis/heimdall-server:latest
             luismachadoreis/heimdall-server:${{ env.VERSION }}
