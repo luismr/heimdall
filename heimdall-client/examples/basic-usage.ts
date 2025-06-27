@@ -16,7 +16,9 @@ const client = new HeimdallClient({
   timeout: 10000,
   headers: {
     'X-Client-App': 'heimdall-client-example'
-  }
+  },
+  signupAccessToken: 'your-signup-access-token', // Required for signup
+  signupSecretToken: 'your-signup-secret-token', // Required for signup
 });
 
 async function basicExample() {
@@ -153,7 +155,9 @@ async function errorHandlingExample() {
 
   // Example 3: Network error simulation
   const networkErrorClient = new HeimdallClient({
-    baseURL: 'http://nonexistent-server:9999/api'
+    baseURL: 'http://nonexistent-server:9999/api',
+    signupAccessToken: 'your-signup-access-token',
+    signupSecretToken: 'your-signup-secret-token',
   });
 
   try {
@@ -179,7 +183,9 @@ async function configurationExample() {
       'X-API-Version': '2.0',
       'X-Client-Platform': 'web',
       'X-Client-Version': '1.0.0'
-    }
+    },
+    signupAccessToken: 'your-signup-access-token',
+    signupSecretToken: 'your-signup-secret-token',
   });
 
   console.log('📋 Custom client configured with:');

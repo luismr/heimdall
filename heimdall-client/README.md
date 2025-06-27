@@ -42,12 +42,14 @@ Replace `YOUR_GITHUB_TOKEN` with a GitHub Personal Access Token that has `read:p
 ```typescript
 import { HeimdallClient } from '@luismr/heimdall-client';
 
-// Create client instance
+// Create client instance with signup protection (recommended)
 const client = new HeimdallClient({
-  baseURL: 'http://localhost:4000/api' // Your Heimdall server URL
+  baseURL: 'http://localhost:4000/api', // Your Heimdall server URL
+  signupAccessToken: 'your-signup-access-token', // Required for signup
+  signupSecretToken: 'your-signup-secret-token', // Required for signup
 });
 
-// Register a new user
+// Register a new user (will only work if tokens are provided)
 const user = await client.signup({
   username: 'johndoe',
   password: 'securepassword123'
@@ -70,6 +72,8 @@ await client.logout({
 
 👆 **That's it!** For complete setup instructions, examples, and advanced usage, see [QUICKSTART.md](QUICKSTART.md).
 
+> **Note:** If `signupAccessToken` and `signupSecretToken` are not provided, the `signup` method will be disabled and throw an error.
+
 ## API Reference
 
 ### Constructor
@@ -84,6 +88,8 @@ interface HeimdallClientConfig {
   baseURL: string;      // Heimdall server base URL
   timeout?: number;     // Request timeout in milliseconds (default: 10000)
   headers?: Record<string, string>; // Additional headers
+  signupAccessToken?: string; // Optional: Signup protection access token
+  signupSecretToken?: string; // Optional: Signup protection secret token
 }
 ```
 
@@ -92,7 +98,9 @@ interface HeimdallClientConfig {
 const client = new HeimdallClient({
   baseURL: 'https://api.example.com/api',
   timeout: 5000,
-  headers: { 'X-Client-Version': '1.0.0' }
+  headers: { 'X-Client-Version': '1.0.0' },
+  signupAccessToken: 'your-signup-access-token',
+  signupSecretToken: 'your-signup-secret-token'
 });
 ```
 
@@ -100,7 +108,7 @@ const client = new HeimdallClient({
 
 #### `signup(request: SignupRequest): Promise<SignupResponse>`
 
-Register a new user account.
+Register a new user account. Requires signup protection tokens if enabled on the server.
 
 **Request:**
 ```typescript
@@ -118,6 +126,9 @@ interface SignupResponse {
   blocked: boolean;
 }
 ```
+
+**Throws:**
+- `HeimdallError` with status 403 if signup protection tokens are not configured in the client.
 
 **Example:**
 ```typescript

@@ -70,26 +70,31 @@ describe('HeimdallClient', () => {
         roles: ['ROLE_USER'],
         blocked: false,
       };
-
+      const protectedClient = new HeimdallClient({
+        baseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
       nock(baseURL)
         .post('/signup', signupRequest)
         .reply(201, signupResponse);
-
-      const result = await client.signup(signupRequest);
+      const result = await protectedClient.signup(signupRequest);
       expect(result).toEqual(signupResponse);
     });
 
     it('should throw HeimdallError when signup fails with 400', async () => {
       const signupRequest = { username: 'existinguser', password: 'password123' };
       const errorResponse = { error: 'User already exists' };
-
+      const protectedClient = new HeimdallClient({
+        baseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
       nock(baseURL)
         .post('/signup', signupRequest)
         .reply(400, errorResponse);
-
       try {
-        await client.signup(signupRequest);
-        // If we reach this line, the test should fail
+        await protectedClient.signup(signupRequest);
         expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(HeimdallError);
@@ -101,30 +106,40 @@ describe('HeimdallClient', () => {
 
     it('should handle network errors', async () => {
       const signupRequest = { username: 'newuser', password: 'password123' };
-
+      const protectedClient = new HeimdallClient({
+        baseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
       nock(baseURL)
         .post('/signup', signupRequest)
         .replyWithError('Network error');
-
-      await expect(client.signup(signupRequest)).rejects.toThrow(HeimdallError);
+      await expect(protectedClient.signup(signupRequest)).rejects.toThrow(HeimdallError);
     });
 
     it('should handle 500 server errors', async () => {
       const signupRequest = { username: 'newuser', password: 'password123' };
-
+      const protectedClient = new HeimdallClient({
+        baseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
       nock(baseURL)
         .post('/signup', signupRequest)
         .reply(500, { error: 'Internal server error' });
-
       try {
-        await client.signup(signupRequest);
-        // If we reach this line, the test should fail
+        await protectedClient.signup(signupRequest);
         expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(HeimdallError);
         const heimdallError = error as HeimdallError;
         expect(heimdallError.status).toBe(500);
       }
+    });
+
+    it('should disable signup if tokens are not provided', async () => {
+      const signupRequest = { username: 'newuser', password: 'password123' };
+      await expect(client.signup(signupRequest)).rejects.toThrow('Signup is disabled');
     });
   });
 
@@ -315,25 +330,30 @@ describe('HeimdallClient', () => {
   describe('utility methods', () => {
     it('should update base URL', () => {
       const newBaseURL = 'https://api.example.com';
-      client.updateBaseURL(newBaseURL);
-      
-      // Verify by making a request and checking the URL
+      const protectedClient = new HeimdallClient({
+        baseURL: newBaseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
+      protectedClient.updateBaseURL(newBaseURL);
       nock('https://api.example.com')
         .post('/signup')
         .reply(201, {});
-
-      expect(client.signup({ username: 'test', password: 'test' })).resolves.toBeDefined();
+      expect(protectedClient.signup({ username: 'test', password: 'test' })).resolves.toBeDefined();
     });
 
     it('should update headers', () => {
-      client.updateHeaders({ 'X-Custom-Header': 'test-value' });
-      
+      const protectedClient = new HeimdallClient({
+        baseURL,
+        signupAccessToken: 'access-token',
+        signupSecretToken: 'secret-token',
+      });
+      protectedClient.updateHeaders({ 'X-Custom-Header': 'test-value' });
       nock(baseURL)
         .post('/signup')
         .matchHeader('x-custom-header', 'test-value')
         .reply(201, {});
-
-      expect(client.signup({ username: 'test', password: 'test' })).resolves.toBeDefined();
+      expect(protectedClient.signup({ username: 'test', password: 'test' })).resolves.toBeDefined();
     });
 
     it('should make custom authenticated requests', async () => {

@@ -76,6 +76,8 @@ export interface HeimdallClientConfig {
   baseURL: string;
   timeout?: number;
   headers?: Record<string, string>;
+  signupAccessToken?: string;
+  signupSecretToken?: string;
 }
 
 /**
