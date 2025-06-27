@@ -1,6 +1,6 @@
 {
   "name": "@luismr/heimdall-api",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Authentication and Authorization API with JWT, DDD, DynamoDB, bcrypt, Express, and Serverless.",
   "main": "dist/src/server.js",
   "scripts": {
