@@ -1,6 +1,6 @@
 {
   "name": "@luismr/heimdall-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "TypeScript client library for consuming Heimdall authentication API endpoints",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
