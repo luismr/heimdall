@@ -38,6 +38,8 @@ import {
 export class HeimdallClient {
   private axiosInstance: AxiosInstance;
   private authContext: AuthContext = {};
+  private signupAccessToken?: string;
+  private signupSecretToken?: string;
 
   /**
    * Creates a new Heimdall client instance
@@ -53,6 +55,8 @@ export class HeimdallClient {
         ...config.headers,
       },
     });
+    this.signupAccessToken = config.signupAccessToken;
+    this.signupSecretToken = config.signupSecretToken;
 
     // Add request interceptor to include authentication headers
     this.axiosInstance.interceptors.request.use(
@@ -115,7 +119,7 @@ export class HeimdallClient {
    * 
    * @param request - Signup request with username and password
    * @returns Promise resolving to user information
-   * @throws HeimdallError when signup fails
+   * @throws HeimdallError when signup fails or signup protection is not configured
    * 
    * @example
    * ```typescript
@@ -127,7 +131,19 @@ export class HeimdallClient {
    * ```
    */
   async signup(request: SignupRequest): Promise<SignupResponse> {
-    const response = await this.axiosInstance.post<SignupResponse>('/signup', request);
+    if (!this.signupAccessToken || !this.signupSecretToken) {
+      return Promise.reject(new HeimdallError('Signup is disabled: signup protection tokens not configured', 403));
+    }
+    const response = await this.axiosInstance.post<SignupResponse>(
+      '/signup',
+      request,
+      {
+        headers: {
+          'X-Access-Token': this.signupAccessToken,
+          'X-Secret-Token': this.signupSecretToken,
+        },
+      }
+    );
     return response.data;
   }
 
