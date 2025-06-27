@@ -167,6 +167,41 @@ The middleware returns standard HTTP error responses:
 - **🤝 Contributing Guidelines** - See [CONTRIBUTE.md](CONTRIBUTE.md)
 - **📦 Release Information** - See [RELEASE.md](RELEASE.md)
 
+## Publishing to npm
+
+To publish a new version of the Heimdall Middleware Express package to npm:
+
+1. **Authenticate with npm (if not already):**
+   - For npmjs.com:
+     ```bash
+     npm login
+     ```
+   - For GitHub Packages (if using):
+     See the earlier section on `.npmrc` setup.
+
+2. **Update the version:**
+   - Bump the version in `package.json` according to [semantic versioning](https://semver.org/):
+     ```bash
+     npm version <patch|minor|major>
+     ```
+
+3. **Build the package:**
+   ```bash
+   npm run build
+   ```
+
+4. **Publish to npm:**
+   - For npmjs.com:
+     ```bash
+     npm publish --access public
+     ```
+   - For GitHub Packages:
+     ```bash
+     npm publish
+     ```
+
+**Note:** Ensure your package name in `package.json` is scoped and configured correctly for your registry.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
