@@ -188,11 +188,11 @@ describe('HeimdallClient', () => {
     });
 
     it('should successfully logout and clear auth context', async () => {
-      const logoutRequest = { refreshToken: 'test-refresh-token' };
+      const logoutRequest = { accessToken: 'test-access-token', refreshToken: 'test-refresh-token' };
       const logoutResponse = { message: 'Logged out successfully' };
 
       nock(baseURL)
-        .post('/logout', logoutRequest)
+        .post('/logout', { refreshToken: logoutRequest.refreshToken })
         .matchHeader('authorization', 'Bearer test-access-token')
         .reply(200, logoutResponse);
 
@@ -204,11 +204,11 @@ describe('HeimdallClient', () => {
     });
 
     it('should throw HeimdallError when logout fails', async () => {
-      const logoutRequest = { refreshToken: 'invalid-refresh-token' };
+      const logoutRequest = { accessToken: 'test-access-token', refreshToken: 'invalid-refresh-token' };
       const errorResponse = { error: 'Invalid refresh token' };
 
       nock(baseURL)
-        .post('/logout', logoutRequest)
+        .post('/logout', { refreshToken: logoutRequest.refreshToken })
         .matchHeader('authorization', 'Bearer test-access-token')
         .reply(400, errorResponse);
 

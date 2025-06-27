@@ -181,26 +181,30 @@ export class HeimdallClient {
   /**
    * Logout user and invalidate refresh token
    * 
-   * @param request - Logout request with refresh token
+   * @param request - Logout request with both accessToken and refreshToken
    * @returns Promise resolving to success message
-   * @throws HeimdallError when logout fails
+   * @throws HeimdallError when logout fails or required tokens are missing
    * 
    * @example
-   * ```typescript
    * await client.logout({
+   *   accessToken: loginResult.accessToken,
    *   refreshToken: loginResult.refreshToken
    * });
    * 
    * // Clear local auth context
    * client.clearAuthContext();
-   * ```
    */
   async logout(request: LogoutRequest): Promise<SuccessResponse> {
-    const response = await this.axiosInstance.post<SuccessResponse>('/logout', request);
-    
+    if (!request.accessToken || !request.refreshToken) {
+      throw new HeimdallError('Logout requires both accessToken and refreshToken in the request body', 400);
+    }
+    const headers: Record<string, string> = {};
+    if (this.authContext.accessToken) {
+      headers["Authorization"] = `Bearer ${this.authContext.accessToken}`;
+    }
+    const response = await this.axiosInstance.post<SuccessResponse>('/logout', {refreshToken: request.refreshToken}, { headers });
     // Clear auth context after successful logout
     this.clearAuthContext();
-
     return response.data;
   }
 

@@ -45,6 +45,7 @@ export interface LoginResponse {
  * Logout request payload
  */
 export interface LogoutRequest {
+  accessToken: string;
   refreshToken: string;
 }
 

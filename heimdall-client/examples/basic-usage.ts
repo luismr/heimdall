@@ -68,6 +68,7 @@ async function basicExample() {
     // 5. Logout
     console.log('\n5. Logging out...');
     await client.logout({
+      accessToken: loginResult.accessToken,
       refreshToken: loginResult.refreshToken
     });
     console.log('✅ Logout successful');
